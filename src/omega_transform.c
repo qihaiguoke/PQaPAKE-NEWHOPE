@@ -27,6 +27,32 @@ void omtransform_init(char *password, omtransform_crs *crs, omtransform_client *
     derive_key((uint8_t *)password, pwsize, crs->salt1, key);
     ae_encrypt(key, sk, PQPAKE_SK_SIZE, server->esk, &server->esk_size);
 }
+void print_omtransform_crs(omtransform_crs *crs)
+{
+    char *saltset[4] = {crs->salt0, crs->salt1, crs->salt2, crs->salt3};
+    for (int i = 0; i < 4; ++i)
+    {
+        printf("salt%d:", i);
+        for (int j = 0; j < SALT_LENGTH; ++j)
+        {
+            printf("%c", saltset[i][j]);
+        }
+        printf("\n");
+    }
+
+    for (int i = 0; i < TOTAL_ROUNDS; ++i)
+    {
+        printf("ciphertext of round:%d\n", i + 1);
+        print_buffer(crs->tr.message[i], crs->tr.bytes[i]);
+    }
+
+
+    for (int i = 0; i < TOTAL_ROUNDS; ++i)
+    {
+        printf("size of round:%d\n", i + 1);
+        printf("%d\n", (int)crs->tr.bytes[i]);
+    }
+}
 
 void omtransform_free_crs(omtransform_crs *crs)
 {
@@ -77,8 +103,10 @@ void omtransform_message_setp2(omtransform_crs *crs, omtransform_client *client,
     ae_decrypt(key, esk, esk_size, sk, NULL);
 
     crypto_kem_dec(client->mackey, crs->tr.message[round] + cipher_size, sk);
-    ++(crs->current_round);
-    transcript_hmac(crs->tr.message, crs->tr.bytes, crs->current_round, client->mackey, KEY_LENGTH, crs->tr_hmac);
+    round=++(crs->current_round);
+    crs->tr.bytes[round]=HMAC_LENGTH;
+    crs->tr.message[round]=malloc(HMAC_LENGTH);
+    transcript_hmac(crs->tr.message, crs->tr.bytes, crs->current_round, client->mackey, KEY_LENGTH, crs->tr.message[round]);
 }
 
 int omtransform_message_setp3(omtransform_crs *crs, omtransform_server *server)
@@ -86,8 +114,17 @@ int omtransform_message_setp3(omtransform_crs *crs, omtransform_server *server)
     int round = crs->current_round;
     uint8_t tr_hmac[HMAC_LENGTH];
     transcript_hmac(crs->tr.message, crs->tr.bytes, round, server->mackey, KEY_LENGTH, tr_hmac);
-    int valid = memcmp(tr_hmac, crs->tr_hmac, HMAC_LENGTH);
+    int valid = memcmp(tr_hmac, crs->tr.message[round-1], HMAC_LENGTH);
     if (!valid)
         printf("omtransform_message_step3: mac of transcripts is invalid!\n");
     return valid;
+}
+
+void print_buffer(const uint8_t *buffer, int size)
+{
+  for (int i = 0; i < size; i++)
+  {
+    printf("%02x", buffer[i]);
+  }
+  printf("\n");
 }

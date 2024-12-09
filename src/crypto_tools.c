@@ -28,8 +28,9 @@ void ae_encrypt(const uint8_t *key, uint8_t *plaintext, int in_nbytes, uint8_t *
     EVP_EncryptInit(ctx, EVP_aes_256_gcm(), key, iv);
 
     EVP_EncryptUpdate(ctx, ciphertext + IV_LENGTH + AUTH_TAG_LENGTH, out_nbytes, plaintext, in_nbytes);
-    EVP_EncryptFinal(ctx, ciphertext + IV_LENGTH + AUTH_TAG_LENGTH, out_nbytes);
-    *out_nbytes += AUTH_TAG_LENGTH + IV_LENGTH;
+    int emp=0;
+    EVP_EncryptFinal(ctx, ciphertext + IV_LENGTH + AUTH_TAG_LENGTH, &emp);
+    *out_nbytes += emp+AUTH_TAG_LENGTH + IV_LENGTH;
 
     uint8_t auth_tag[AUTH_TAG_LENGTH];
     EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, AUTH_TAG_LENGTH, auth_tag);
@@ -86,16 +87,16 @@ void generate_salt(char *salt, int salt_len)
 {
     uint8_t salt_bytes[salt_len / 2];
     RAND_bytes(salt_bytes, salt_len / 2);
-    char s;
+    int s=0;
+
     for (int i = 0; i < salt_len / 2; ++i)
-    {
+    {   
         s = salt_bytes[i] >> 4;
-        s = s > '9' ? s + 'A' - 'a' : s;
-        salt[2 * i] = s;
+        salt[2 * i] = s<=9?s+'0':s-10+'a';
         s = salt_bytes[i] & 0x0f;
-        s = s > '9' ? s + 'A' - 'a' : s;
-        salt[2 * i + 1] = s;
+        salt[2 * i + 1] = s<=9?s+'0':s-10+'a';
     }
+
 }
 
 void derive_key(const uint8_t *password, int pwsize, char *salt, uint8_t *key)

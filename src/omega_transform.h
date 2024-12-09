@@ -20,8 +20,6 @@ typedef struct omtransform_crs
     char salt3[SALT_LENGTH];
     size_t current_round;
     transcript tr;
-    uint8_t tr_hmac[HMAC_LENGTH];
-
 }omtransform_crs; 
 
 typedef struct omtransform_client
@@ -48,6 +46,8 @@ typedef struct omtransform_server
 
 void omtransform_init(char *password, omtransform_crs *crs, omtransform_client *client, omtransform_server *server);
 
+void print_omtransform_crs(omtransform_crs *crs);
+
 void omtransform_free_crs(omtransform_crs *crs);
 
 void upadte_transcript(omtransform_crs *crs, uint8_t *message, size_t bytes);
@@ -57,4 +57,7 @@ void omtransform_message_setp1(omtransform_crs *crs, omtransform_server *server,
 void omtransform_message_setp2(omtransform_crs *crs, omtransform_client *client, const uint8_t *ss);
 
 int omtransform_message_setp3(omtransform_crs *crs, omtransform_server *server);
+
+void print_buffer(const uint8_t *buffer, int size);
+
 #endif

@@ -4,14 +4,7 @@
 #include <pqpake/omega_transform.h>
 #include <pqpake/crypto_tools.h>
 
-void print_buffer(const uint8_t *buffer, int size)
-{
-  for (int i = 0; i < size; i++)
-  {
-    printf("%02x", buffer[i]);
-  }
-  printf("\n");
-}
+
 
 void acake_test()
 {
@@ -22,6 +15,7 @@ void acake_test()
   omtransform_client *client = malloc(sizeof(omtransform_client));
   omtransform_server *server = malloc(sizeof(omtransform_server));
   omtransform_init(password, crs, client, server);
+
 
   // cake begin
   uint32_t ssid = 424242;
@@ -110,20 +104,8 @@ void acake_test()
     if (success)
       printf("aCake_test passed!\n");
   }
-  printf("salts of kdf:\n");
-  print_buffer((const uint8_t *)crs->salt0,SALT_LENGTH);
-  print_buffer((const uint8_t *)crs->salt1,SALT_LENGTH);
-  print_buffer((const uint8_t *)crs->salt2,SALT_LENGTH);
-  print_buffer((const uint8_t *)crs->salt3,SALT_LENGTH);
-
-
-  for(int i=0;i<3;++i){
-    printf("ciphertext of round:%d\n",i+1);
-    print_buffer(crs->tr.message[i],crs->tr.bytes[i]);
-  }
-
-  printf("mac of transcript:\n");
-  print_buffer(crs->tr_hmac,HMAC_LENGTH);
+  
+  //print_omtransform_crs(crs); //print salts of kdf, message and size of each round communication
 
   cake_free_agent(alice);
   cake_free_agent(bob);

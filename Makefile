@@ -15,6 +15,7 @@ all: 128 256
 
 128: $(LIB_CAKE_128)
 #	$(MAKE) -C tests 128 -j 4
+#	$(MAKE) -C benchmark 128 -j 4
 
 $(LIB_CAKE_128): $(OBJECTS_128)  $(LIB_NEWHOPE_512)
 	$(MKDIR) newhope-dump && cd newhope-dump && ar -x ../$(LIB_NEWHOPE_512) && cd ..
@@ -39,7 +40,8 @@ $(LIB_CAKE_256): $(OBJECTS_256)  $(LIB_NEWHOPE_1024)
 	$(RM) -r newhope-dump
 
 $(LIB_NEWHOPE_1024):
-	$(MAKE) -C newhope1024cca -j 4
+#	$(MAKE) -C newhope1024cca -j 4
+#	$(MAKE) -C benchmark 128 -j 4
 	
 bin/256/%.o: src/%.c $(HEADERS)
 	$(MKDIR) $(@D)
@@ -48,6 +50,7 @@ bin/256/%.o: src/%.c $(HEADERS)
 clean:
 	$(RM) -r bin
 	$(RM) -r lib
-#	$(MAKE) -C newhope512cca clean
-#	$(MAKE) -C newhope1024cca clean
-#	$(MAKE) -C  tests clean
+	$(MAKE) -C newhope512cca clean
+	$(MAKE) -C newhope1024cca clean
+	$(MAKE) -C  tests clean
+	$(MAKE) -C  benchmark clean
