@@ -21,3 +21,5 @@ $(LIB): $(OBJECTS)
 
 clean:
 	-rm test
+	$(RM) $(OBJECTS)
+	$(RM) $(LIB)

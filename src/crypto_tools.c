@@ -25,7 +25,7 @@ void ae_encrypt(const uint8_t *key, uint8_t *plaintext, int in_nbytes, uint8_t *
     memcpy(ciphertext + AUTH_TAG_LENGTH, iv, IV_LENGTH);
 
     EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
-    EVP_EncryptInit(ctx, EVP_aes_256_gcm(), key, iv);
+    EVP_EncryptInit(ctx, AE_OPT, key, iv);
 
     EVP_EncryptUpdate(ctx, ciphertext + IV_LENGTH + AUTH_TAG_LENGTH, out_nbytes, plaintext, in_nbytes);
     int emp=0;
@@ -45,7 +45,7 @@ void ae_decrypt(const uint8_t *key, uint8_t *ciphertext, int in_nbytes, uint8_t 
     memcpy(iv, ciphertext + AUTH_TAG_LENGTH, IV_LENGTH);
 
     EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
-    EVP_DecryptInit(ctx, EVP_aes_256_gcm(), key, iv);
+    EVP_DecryptInit(ctx, AE_OPT, key, iv);
 
     EVP_DecryptUpdate(ctx, plaintext, out_nbytes, ciphertext + IV_LENGTH + AUTH_TAG_LENGTH, in_nbytes - IV_LENGTH - AUTH_TAG_LENGTH);
 
