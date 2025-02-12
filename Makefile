@@ -14,7 +14,7 @@ CFLAGS = -Wall -Werror -std=c99 -O3
 all: 128 256
 
 128: $(LIB_CAKE_128)
-#	$(MAKE) -C tests 128 -j 4
+	$(MAKE) -C tests 128 -j 4
 #	$(MAKE) -C benchmark 128 -j 4
 
 $(LIB_CAKE_128): $(OBJECTS_128)  $(LIB_NEWHOPE_512)
@@ -31,7 +31,7 @@ bin/128/%.o: src/%.c $(HEADERS)
 	$(CC) $(CFLAGS) -I newhope512cca -c -o $@ $<
 
 256: $(LIB_CAKE_256)
-#	$(MAKE) -C tests 256 -j 4
+	$(MAKE) -C tests 256 -j 4
 #	$(MAKE) -C benchmark 128 -j 4
 
 $(LIB_CAKE_256): $(OBJECTS_256)  $(LIB_NEWHOPE_1024)

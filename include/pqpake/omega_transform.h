@@ -36,7 +36,7 @@ typedef struct omtransform_server
 {
     uint8_t pwfile[KEY_LENGTH];
     uint8_t pk[PQPAKE_PK_SIZE];
-    uint8_t esk[PQPAKE_SK_SIZE+IV_LENGTH+AUTH_TAG_LENGTH+16];
+    uint8_t esk[PQPAKE_SK_SIZE+IV_LENGTH+AUTH_TAG_LENGTH];
     int esk_size;
     uint8_t symkey[KEY_LENGTH];
     uint8_t sharedkey[KEY_LENGTH];

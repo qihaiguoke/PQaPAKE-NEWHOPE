@@ -23,6 +23,7 @@ void omtransform_init(char *password, omtransform_crs *crs, omtransform_client *
 
     uint8_t sk[PQPAKE_SK_SIZE];
     crypto_kem_keypair(server->pk, sk);
+
     uint8_t key[KEY_LENGTH];
     derive_key((uint8_t *)password, pwsize, crs->salt1, key);
     ae_encrypt(key, sk, PQPAKE_SK_SIZE, server->esk, &server->esk_size);
@@ -45,7 +46,6 @@ void print_omtransform_crs(omtransform_crs *crs)
         printf("ciphertext of round:%d\n", i + 1);
         print_buffer(crs->tr.message[i], crs->tr.bytes[i]);
     }
-
 
     for (int i = 0; i < TOTAL_ROUNDS; ++i)
     {
@@ -103,9 +103,9 @@ void omtransform_message_setp2(omtransform_crs *crs, omtransform_client *client,
     ae_decrypt(key, esk, esk_size, sk, NULL);
 
     crypto_kem_dec(client->mackey, crs->tr.message[round] + cipher_size, sk);
-    round=++(crs->current_round);
-    crs->tr.bytes[round]=HMAC_LENGTH;
-    crs->tr.message[round]=malloc(HMAC_LENGTH);
+    round = ++(crs->current_round);
+    crs->tr.bytes[round] = HMAC_LENGTH;
+    crs->tr.message[round] = malloc(HMAC_LENGTH);
     transcript_hmac(crs->tr.message, crs->tr.bytes, crs->current_round, client->mackey, KEY_LENGTH, crs->tr.message[round]);
 }
 
@@ -114,17 +114,17 @@ int omtransform_message_setp3(omtransform_crs *crs, omtransform_server *server)
     int round = crs->current_round;
     uint8_t tr_hmac[HMAC_LENGTH];
     transcript_hmac(crs->tr.message, crs->tr.bytes, round, server->mackey, KEY_LENGTH, tr_hmac);
-    int valid = memcmp(tr_hmac, crs->tr.message[round-1], HMAC_LENGTH);
-    if (!valid)
+    int valid = memcmp(tr_hmac, crs->tr.message[round], HMAC_LENGTH);
+    if (valid != 0)
         printf("omtransform_message_step3: mac of transcripts is invalid!\n");
     return valid;
 }
 
 void print_buffer(const uint8_t *buffer, int size)
 {
-  for (int i = 0; i < size; i++)
-  {
-    printf("%02x", buffer[i]);
-  }
-  printf("\n");
+    for (int i = 0; i < size; i++)
+    {
+        printf("%02x", buffer[i]);
+    }
+    printf("\n");
 }

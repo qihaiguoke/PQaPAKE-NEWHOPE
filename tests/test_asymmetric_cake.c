@@ -84,7 +84,7 @@ void acake_test()
   omtransform_message_setp1(crs, server, bob_ss);
   omtransform_message_setp2(crs, client, alice_ss);
 
-  if (omtransform_message_setp3(crs, server))
+  if (!omtransform_message_setp3(crs, server))
   {
     printf("Alice: ");
     print_buffer(client->sharedkey, KEY_LENGTH);

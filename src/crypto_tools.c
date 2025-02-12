@@ -22,19 +22,19 @@ void ae_encrypt(const uint8_t *key, uint8_t *plaintext, int in_nbytes, uint8_t *
 {
     uint8_t iv[IV_LENGTH];
     RAND_bytes(iv, IV_LENGTH);
-    memcpy(ciphertext + AUTH_TAG_LENGTH, iv, IV_LENGTH);
+    memcpy(ciphertext, iv, IV_LENGTH);
 
     EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
     EVP_EncryptInit(ctx, AE_OPT, key, iv);
 
-    EVP_EncryptUpdate(ctx, ciphertext + IV_LENGTH + AUTH_TAG_LENGTH, out_nbytes, plaintext, in_nbytes);
-    int emp=0;
-    EVP_EncryptFinal(ctx, ciphertext + IV_LENGTH + AUTH_TAG_LENGTH, &emp);
-    *out_nbytes += emp+AUTH_TAG_LENGTH + IV_LENGTH;
+    int len = 0;
+    EVP_EncryptUpdate(ctx, ciphertext + IV_LENGTH, &len, plaintext, in_nbytes);
+    EVP_EncryptFinal(ctx, ciphertext + IV_LENGTH + len, out_nbytes);
+    *out_nbytes += len + AUTH_TAG_LENGTH + IV_LENGTH;
 
     uint8_t auth_tag[AUTH_TAG_LENGTH];
     EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, AUTH_TAG_LENGTH, auth_tag);
-    memcpy(ciphertext, auth_tag, AUTH_TAG_LENGTH);
+    memcpy(ciphertext + *out_nbytes - AUTH_TAG_LENGTH, auth_tag, AUTH_TAG_LENGTH);
 
     EVP_CIPHER_CTX_free(ctx);
 }
@@ -42,16 +42,17 @@ void ae_encrypt(const uint8_t *key, uint8_t *plaintext, int in_nbytes, uint8_t *
 void ae_decrypt(const uint8_t *key, uint8_t *ciphertext, int in_nbytes, uint8_t *plaintext, int *out_nbytes)
 {
     uint8_t iv[IV_LENGTH];
-    memcpy(iv, ciphertext + AUTH_TAG_LENGTH, IV_LENGTH);
+    memcpy(iv, ciphertext, IV_LENGTH);
 
     EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
     EVP_DecryptInit(ctx, AE_OPT, key, iv);
+    int len = 0;
+    EVP_DecryptUpdate(ctx, plaintext, &len, ciphertext + IV_LENGTH, in_nbytes - IV_LENGTH - AUTH_TAG_LENGTH);
 
-    EVP_DecryptUpdate(ctx, plaintext, out_nbytes, ciphertext + IV_LENGTH + AUTH_TAG_LENGTH, in_nbytes - IV_LENGTH - AUTH_TAG_LENGTH);
+    EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, AUTH_TAG_LENGTH, ciphertext + in_nbytes - AUTH_TAG_LENGTH);
 
-    EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, AUTH_TAG_LENGTH, ciphertext);
-
-    EVP_DecryptFinal(ctx, plaintext, out_nbytes);
+    EVP_DecryptFinal(ctx, plaintext + len, out_nbytes);
+    if(out_nbytes!=NULL) *out_nbytes += len;
 
     EVP_CIPHER_CTX_free(ctx);
 }
@@ -87,16 +88,15 @@ void generate_salt(char *salt, int salt_len)
 {
     uint8_t salt_bytes[salt_len / 2];
     RAND_bytes(salt_bytes, salt_len / 2);
-    int s=0;
+    int s = 0;
 
     for (int i = 0; i < salt_len / 2; ++i)
-    {   
+    {
         s = salt_bytes[i] >> 4;
-        salt[2 * i] = s<=9?s+'0':s-10+'a';
+        salt[2 * i] = s <= 9 ? s + '0' : s - 10 + 'a';
         s = salt_bytes[i] & 0x0f;
-        salt[2 * i + 1] = s<=9?s+'0':s-10+'a';
+        salt[2 * i + 1] = s <= 9 ? s + '0' : s - 10 + 'a';
     }
-
 }
 
 void derive_key(const uint8_t *password, int pwsize, char *salt, uint8_t *key)
