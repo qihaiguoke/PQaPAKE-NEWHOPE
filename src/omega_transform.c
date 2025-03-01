@@ -23,9 +23,7 @@ void omtransform_init(char *password, omtransform_crs *crs, omtransform_client *
 
     client->password = password;
     int pwsize = strlen(password);
-    uint8_t pwfile[KEY_LENGTH];
-    derive_key((uint8_t *)password, pwsize, crs->salt0, pwfile);
-    memcpy(server->pwfile,pwfile, KEY_LENGTH);
+    derive_key((uint8_t *)password, pwsize, crs->salt0, server->pwfile);
 
     uint8_t sk[PQPAKE_SK_SIZE];
     crypto_kem_keypair(server->pk, sk);
