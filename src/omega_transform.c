@@ -2,24 +2,30 @@
 #include <stdio.h>
 #include <string.h>
 #include <openssl/rand.h>
+#include <openssl/sha.h>
 #include "constants.h"
 #include "publickey.h"
 #include "crypto_tools.h"
 #include "omega_transform.h"
 #include "api.h"
 
+#if (CRYPTO_N == 512)
+#define HASH SHA256
+#elif (CRYPTO_N == 1024)
+#define HASH SHA512
+#endif
+
 void omtransform_init(char *password, omtransform_crs *crs, omtransform_client *client, omtransform_server *server)
 {
     crs->current_round = 0;
     generate_salt(crs->salt0, SALT_LENGTH);
     generate_salt(crs->salt1, SALT_LENGTH);
-    generate_salt(crs->salt2, SALT_LENGTH);
-    generate_salt(crs->salt3, SALT_LENGTH);
 
     client->password = password;
     int pwsize = strlen(password);
-    derive_key((uint8_t *)password, pwsize, crs->salt0, client->pwfile);
-    memcpy(server->pwfile, client->pwfile, KEY_LENGTH);
+    uint8_t pwfile[KEY_LENGTH];
+    derive_key((uint8_t *)password, pwsize, crs->salt0, pwfile);
+    memcpy(server->pwfile,pwfile, KEY_LENGTH);
 
     uint8_t sk[PQPAKE_SK_SIZE];
     crypto_kem_keypair(server->pk, sk);
@@ -28,31 +34,7 @@ void omtransform_init(char *password, omtransform_crs *crs, omtransform_client *
     derive_key((uint8_t *)password, pwsize, crs->salt1, key);
     ae_encrypt(key, sk, PQPAKE_SK_SIZE, server->esk, &server->esk_size);
 }
-void print_omtransform_crs(omtransform_crs *crs)
-{
-    char *saltset[4] = {crs->salt0, crs->salt1, crs->salt2, crs->salt3};
-    for (int i = 0; i < 4; ++i)
-    {
-        printf("salt%d:", i);
-        for (int j = 0; j < SALT_LENGTH; ++j)
-        {
-            printf("%c", saltset[i][j]);
-        }
-        printf("\n");
-    }
 
-    for (int i = 0; i < TOTAL_ROUNDS; ++i)
-    {
-        printf("ciphertext of round:%d\n", i + 1);
-        print_buffer(crs->tr.message[i], crs->tr.bytes[i]);
-    }
-
-    for (int i = 0; i < TOTAL_ROUNDS; ++i)
-    {
-        printf("size of round:%d\n", i + 1);
-        printf("%d\n", (int)crs->tr.bytes[i]);
-    }
-}
 
 void omtransform_free_crs(omtransform_crs *crs)
 {
@@ -70,8 +52,10 @@ void upadte_transcript(omtransform_crs *crs, uint8_t *message, size_t bytes)
 
 void omtransform_message_setp1(omtransform_crs *crs, omtransform_server *server, const uint8_t *ss)
 {
-    derive_key(ss, PQPAKE_SHARED_SECRET_SIZE, crs->salt2, server->symkey);
-    derive_key(ss, PQPAKE_SHARED_SECRET_SIZE, crs->salt3, server->sharedkey);
+    uint8_t dk[KEY_LENGTH*2];
+    HASH(ss, PQPAKE_SHARED_SECRET_SIZE, dk);
+    memcpy(server->symkey, dk, KEY_LENGTH);
+    memcpy(server->sharedkey, dk + KEY_LENGTH, KEY_LENGTH);
 
     int out_size;
     uint8_t eesk[AUTH_TAG_LENGTH + IV_LENGTH + server->esk_size + 16];
@@ -88,8 +72,12 @@ void omtransform_message_setp1(omtransform_crs *crs, omtransform_server *server,
 
 void omtransform_message_setp2(omtransform_crs *crs, omtransform_client *client, const uint8_t *ss)
 {
-    derive_key(ss, KEY_LENGTH, crs->salt2, client->symkey);
-    derive_key(ss, KEY_LENGTH, crs->salt3, client->sharedkey);
+    
+    uint8_t dk[KEY_LENGTH*2];
+    HASH(ss, PQPAKE_SHARED_SECRET_SIZE, dk);
+    memcpy(client->symkey, dk, KEY_LENGTH);
+    memcpy(client->sharedkey, dk + KEY_LENGTH, KEY_LENGTH);
+;
 
     int round = crs->current_round;
     uint8_t esk[AUTH_TAG_LENGTH + IV_LENGTH + PQPAKE_SK_SIZE];

@@ -20,6 +20,8 @@ void acake_test()
   // cake begin
   uint32_t ssid = 424242;
 
+  int pwsize = strlen(password);
+  derive_key((uint8_t *)password, pwsize, crs->salt0, client->pwfile);
   char alice_name[] = "alice";
   cake_agent *alice =
       cake_create_alice(ssid, client->pwfile, KEY_LENGTH,

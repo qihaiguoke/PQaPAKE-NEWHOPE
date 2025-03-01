@@ -20,6 +20,8 @@ int run_acake(omtransform_crs *crs, omtransform_client *client, omtransform_serv
               char *alice_name,
               char *bob_name)
 {
+  int pwsize = strlen(password);
+  derive_key((uint8_t *)password, pwsize, crs->salt0, client->pwfile);
   cake_agent *alice =
       cake_create_alice(ssid, client->pwfile, KEY_LENGTH,
                         (uint8_t *)alice_name, strlen(alice_name));
@@ -134,7 +136,6 @@ void benchmark_acake(int n)
     }
 
     runtimes[i] = (double)(end - start) / CLOCKS_PER_SEC * 1000;
-
   }
 
   compute_statistics(pretimes, n, result_pre);
@@ -143,7 +144,7 @@ void benchmark_acake(int n)
   free(pretimes);
   free(runtimes);
 
-  printf("Benchmark results for aCAKE:prepare (n=%d):\n", n);
+  printf("Benchmark results for Registration: (n=%d):\n", n);
   printf("\tmean: %f ms\n", result_pre->mean);
   printf("\tmedian: %f ms\n", result_pre->median);
   printf("\tmin: %f ms\n", result_pre->min);
@@ -151,7 +152,7 @@ void benchmark_acake(int n)
   printf("\tstd dev: %f ms\n", result_pre->std_dev);
   printf("\tfail count: %d\n", result_pre->fail_count);
 
-  printf("Benchmark results for aCAKE:run    (n=%d):\n", n);
+  printf("Benchmark results for aCAKE: (n=%d):\n", n);
   printf("\tmean: %f ms\n", result_run->mean);
   printf("\tmedian: %f ms\n", result_run->median);
   printf("\tmin: %f ms\n", result_run->min);
@@ -159,8 +160,6 @@ void benchmark_acake(int n)
   printf("\tstd dev: %f ms\n", result_run->std_dev);
   printf("\tfail count: %d\n", result_run->fail_count);
 }
-
-
 
 int main(int argc, char **argv)
 {
