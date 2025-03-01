@@ -122,7 +122,7 @@ void benchmark_acake(int n)
     clock_t start = clock();
     prepare_acake(password, &crs, &client, &server);
     clock_t end = clock();
-    pretimes[i] = (double)(end - start) / CLOCKS_PER_SEC * 1000;
+    pretimes[i] = (double)(end - start);// / CLOCKS_PER_SEC * 1000;
     uint32_t ssid = rand();
 
     start = clock();
@@ -135,7 +135,7 @@ void benchmark_acake(int n)
       continue;
     }
 
-    runtimes[i] = (double)(end - start) / CLOCKS_PER_SEC * 1000;
+    runtimes[i] = (double)(end - start);// / CLOCKS_PER_SEC * 1000;
   }
 
   compute_statistics(pretimes, n, result_pre);
@@ -145,19 +145,19 @@ void benchmark_acake(int n)
   free(runtimes);
 
   printf("Benchmark results for Registration: (n=%d):\n", n);
-  printf("\tmean: %f ms\n", result_pre->mean);
-  printf("\tmedian: %f ms\n", result_pre->median);
-  printf("\tmin: %f ms\n", result_pre->min);
-  printf("\tmax: %f ms\n", result_pre->max);
-  printf("\tstd dev: %f ms\n", result_pre->std_dev);
+  printf("\tmean: %f cpu cycles\n", result_pre->mean);
+  printf("\tmedian: %f cpu cycles\n", result_pre->median);
+  printf("\tmin: %f cpu cycles\n", result_pre->min);
+  printf("\tmax: %f cpu cycles\n", result_pre->max);
+  printf("\tstd dev: %f cpu cycles\n", result_pre->std_dev);
   printf("\tfail count: %d\n", result_pre->fail_count);
 
   printf("Benchmark results for aCAKE: (n=%d):\n", n);
-  printf("\tmean: %f ms\n", result_run->mean);
-  printf("\tmedian: %f ms\n", result_run->median);
-  printf("\tmin: %f ms\n", result_run->min);
-  printf("\tmax: %f ms\n", result_run->max);
-  printf("\tstd dev: %f ms\n", result_run->std_dev);
+  printf("\tmean: %f cpu cycles\n", result_run->mean);
+  printf("\tmedian: %f cpu cycles\n", result_run->median);
+  printf("\tmin: %f cpu cycles\n", result_run->min);
+  printf("\tmax: %f cpu cycles\n", result_run->max);
+  printf("\tstd dev: %f cpu cycles\n", result_run->std_dev);
   printf("\tfail count: %d\n", result_run->fail_count);
 }
 
